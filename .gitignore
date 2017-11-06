@@ -3,3 +3,4 @@ result
 *.pdf
 lab1_c
 mownit_singleprec
+__pycache__
