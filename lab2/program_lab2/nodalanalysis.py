@@ -11,7 +11,8 @@ for i in range(1, 4):
 edges = [(1, 2, {'r': 1., 'i': 0}), (2, 3, {'r': 2., 'i': 0}), (3, 1,{'r': 0., 'i': 0})]
 G.add_weighted_edges_from(edges)
 
-W = [i['r'] for i in [w for u, v, w in G.edges.data('weight')]]
+D = [w for u, v, w in G.edges.data('weight')]
+R = [r['r'] for r in D]
 for i in W:
     print(i['r'])
 print(W)
