@@ -49,8 +49,9 @@ if __name__ == "__main__":
     b = np.array([[14.], [4.], [2.], [2.]])
     a0 = a[2:,2]
     a1 = a[2:,2:]
-    maxes = a[2:,2].max(axis=1)
-    print((a[0:,0]/maxes).argmax())
+    #maxes = a[0:,0].max(axis=1)
+    #print(a[0:,0])
+    #print((a[0:,0]/maxes).argmax())
     #[row/row.max() i=for row in A]
     # x2 = lup(a)
     # L = np.tril(a)

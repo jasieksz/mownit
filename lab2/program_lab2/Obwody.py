@@ -1,6 +1,5 @@
 import numpy as np
 import networkx as nx
-import graphviz
 import sys
 import re
 
@@ -91,19 +90,19 @@ class Obwod:
         graphviz_graph.draw(filename)
 
 
-if __name__ == "__main__":
-
-    rozw = Obwod()
-    if (len(sys.argv) != 3 and len(sys.argv) != 4):
-        print
-        'Uruchomienie: python Obwod.py <plik_wejsciowy> <plik_wyjsciowy> [d] - skierowanie zgodnie z przeplywem'
-    else:
-        rozw.load(sys.argv[1])
-        if (len(sys.argv) == 4):
-            rozw.solve(sys.argv[3])
-        else:
-            rozw.solve(0)
-        rozw.draw(sys.argv[2])
+# if __name__ == "__main__":
+#
+#     rozw = Obwod()
+#     if (len(sys.argv) != 3 and len(sys.argv) != 4):
+#         print
+#         'Uruchomienie: python Obwod.py <plik_wejsciowy> <plik_wyjsciowy> [d] - skierowanie zgodnie z przeplywem'
+#     else:
+#         rozw.load(sys.argv[1])
+#         if (len(sys.argv) == 4):
+#             rozw.solve(sys.argv[3])
+#         else:
+#             rozw.solve(0)
+#         rozw.draw(sys.argv[2])
 
 
 
