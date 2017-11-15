@@ -3,20 +3,6 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator
 import numpy as np
-from matplotlib.patches import FancyArrowPatch
-from mpl_toolkits.mplot3d import proj3d
-
-class Arrow3D(FancyArrowPatch):
-
-    def __init__(self, xs, ys, zs, *args, **kwargs):
-        FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
-        self._verts3d = xs, ys, zs
-
-    def draw(self, renderer):
-        xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
-        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
-        FancyArrowPatch.draw(self, renderer)
 
 
 def my_plot(X, Y, Z):
@@ -64,17 +50,18 @@ if __name__ == "__main__":
     B = A3 @ (A2 @ (A1 @ P))
 
     U1, s1, V1 = svd(A1)
-    U2, s2, V2 = svd(A1)
-    U3, s3, V3 = svd(A1)
+    U2, s2, V2 = svd(A2)
+    U3, s3, V3 = svd(A3)
 
     fig = plt.figure(figsize=(15, 15))
     ax = fig.gca(projection='3d')
-    ax.scatter(X, Y, Z, color='r')
+    ax.scatter(X, Y, Z, color='orange')
     ax.scatter(B[0], B[1], B[2], color='g')
 
-    ax.quiver(0, 0, 0, U1[0][0], U1[0][1], U1[0][2], length=s1[0])
-    ax.quiver(0, 0, 0, U2[0][0], U2[0][1], U2[0][2], length=s2[0], color='g')
-    ax.quiver(0, 0, 0, U3[0][0], U3[0][1], U3[0][2], length=s3[0])
+    x0, y0, z0 = [[0] * 3] * 3
+    aX = [U1[0][0], U2[0][0], U3[0][0]]
+    aY = [U1[0][1], U2[0][1], U3[0][1]]
+    aZ = [U1[0][2], U2[0][2], U3[0][2]]
+    ax.quiver(x0, y0, z0, aX, aY, aZ, color='r')
 
     plt.show()
-
