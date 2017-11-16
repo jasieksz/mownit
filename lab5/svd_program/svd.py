@@ -5,6 +5,8 @@ from matplotlib.ticker import LinearLocator
 import numpy as np
 
 
+# TODO : ex. 4
+
 def my_plot(X, Y, Z):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
@@ -52,6 +54,7 @@ if __name__ == "__main__":
     U1, s1, V1 = svd(A1)
     U2, s2, V2 = svd(A2)
     U3, s3, V3 = svd(A3)
+
 
     fig = plt.figure(figsize=(15, 15))
     ax = fig.gca(projection='3d')

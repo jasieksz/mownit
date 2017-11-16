@@ -15,13 +15,16 @@ def compose(U, s, V):
     return U @ D @ V
 
 
-if __name__ == "__main__":
-    k = 64
-    face = scipy.misc.face(gray=True)
-
-    U, s, V = np.linalg.svd(face)
+def compress(image, k):
+    U, s, V = np.linalg.svd(image)
     Ur, sr, Vr = reduce(k, U, s, V)
-    face2 = compose(Ur, sr, Vr)
+    result = compose(Ur, sr, Vr)
+    return result
 
-    plt.imshow(face2)
+
+if __name__ == "__main__":
+    face = scipy.misc.face(gray=True)
+    compressed = [compress(face, k) for k in [8, 32, 64, 128, 256, 512]]
+    diff = [np.abs(face - compressed[i]) for i in range(len(compressed))]
+    plt.imshow(compressed[1])
     plt.show()
