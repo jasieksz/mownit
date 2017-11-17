@@ -1,123 +1,117 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import random
+import math
 import numpy as np
+import csv
+import circuitgenerator
 
 
-class Solver(object):
+class CircutSolver:
     def __init__(self):
-        self.path = "./in.txt"
-        self.G = nx.DiGraph()
-        self.sem = self.read_sem()
+        self.G = self.make_graph()
+        self.emf = self.get_emf()
+        self.G.add_edge(self.emf[0], self.emf[1], weight=0.)
 
-    def read_sem(self):
-        f = open(self.path, 'r')
-        line = f.readline()
-        sem_line = line.split(" ")  # SEM
-        sem_tup = (int(sem_line[0]), int(sem_line[1]), float(sem_line[2]))
-        f.close()
-        return sem_tup
+    def make_graph(self):
+        graph = nx.DiGraph()
+        with open('data/circuit.csv', newline='') as circuit_csv:
+            reader = csv.DictReader(circuit_csv)
+            for row in reader:
+                graph.add_edge(int(row['u']), int(row['v']), weight=float(row['r']))
+        return graph
 
-    def load(self):
-        edge_iter = 0
-        f = open(self.path, 'r')
-        line = f.readline()
-        line = f.readline()
-        while line and line not in ["", "\n"]:
-            split_line = line.split(" ")
-            u = int(split_line[0])
-            v = int(split_line[1])
-            w = float(split_line[2])
-            self.G.add_weighted_edges_from([(u, v, {'r': w, 'i': 0, 'num': edge_iter})])
-            edge_iter += 1
-            line = f.readline()
-        f.close()
-        self.G.add_weighted_edges_from([(self.sem[0], self.sem[1], {'r': 0, 'i': 0, 'num': edge_iter})])
+    def get_emf(self):
+        with open('data/emf.csv', newline='') as emf_csv:
+            reader = csv.DictReader(emf_csv)
+            for row in reader:
+                emf = (int(row['s']), int(row['t']), float(row['e']))
+                return emf
 
-    def get_current(self):
-        R = [r['i'] for r in [w for u, v, w in self.G.edges.data('weight')]]
-        return R
-
-    def sem_cycles(self):
+    def get_edge_index(self, n1, n2):
         i = 0
-        for cycle in nx.cycle_basis(self.G.to_undirected()):
-            if (self.sem[0] in cycle and self.sem[1] in cycle):
-                i += 1
-        return i
+        for u, v, w in self.G.edges.data():
+            if (u == n1 and v == n2) or (u == n2 and v == n1):
+                return i
+            i += 1
+        return -1
 
-    def solveKirchhoff(self):
-        size = (self.sem_cycles() + self.G.number_of_nodes() + 1)
-        current_row = 0
-        A = np.zeros(shape=(size, self.G.number_of_edges()))
-        B = np.zeros(size - 1)
+    def get_resistance(self):
+        return [w['weight'] for u, v, w in self.G.edges.data()]
+
+    def get_currents(self):
+        return [w['I'] for u, v, w in self.G.edges.data()]
+
+    def add_currents(self, I):
+        i = 0
+        for u, v, w in self.G.edges.data():
+            w['I'] = I[i]
+            i += 1
+
+    def get_cycles(self):
+        cycles = nx.cycle_basis(self.G.to_undirected())
+        return [cycle for cycle in cycles if (self.emf[0] in cycle and self.emf[1] in cycle)]
+
+    def make_equation(self):
+        A = []
+        B = []
+        # FIRST LAW
         for node in self.G.nodes:
+            A.append([0.] * self.G.number_of_edges())
+            B.append(0.)
             for succ in self.G.successors(node):
-                A[node][self.G.edges[(node, succ)]['weight']['num']] = -1
+                A[-1][self.get_edge_index(node, succ)] -= 1
             for pred in self.G.predecessors(node):
-                A[node][self.G.edges[(pred, node)]['weight']['num']] = 1
-            current_row += 1
-        if np.count_nonzero(A[0]) == 0:
-            A = A[1:]
-            current_row += 1
-        for cycle in nx.cycle_basis(self.G.to_undirected()):
-            if (self.sem[0] in cycle and self.sem[1] in cycle):
-                for i in range(len(cycle) - 1):
-                    u = cycle[i]
-                    v = cycle[i + 1]
-                    if self.G.has_edge(u, v):
-                        A[current_row - 1][self.G.edges[(u, v)]['weight']['num']] = self.G.edges[(u, v)]['weight']['r']
-                        B[current_row - 1] = self.sem[2]
-                u = cycle[len(cycle) - 1]
-                v = cycle[0]
-                if self.G.has_edge(u, v):
-                    A[current_row - 1][self.G.edges[(u, v)]['weight']['num']] = self.G.edges[(u, v)]['weight']['r']
-                    B[current_row - 1] = self.sem[2]
-            current_row += 1
+                A[-1][self.get_edge_index(pred, node)] += 1
+        # SECOND LAW
+        for cycle in self.get_cycles():
+            A.append([0.] * self.G.number_of_edges())
+            B.append(0.)
+            for i in range(len(cycle)):
+                u = cycle[i]
+                v = cycle[(i + 1) % len(cycle)]  # cycle is [ 0 1 2 4 ] , % is for edge 4 -> 0
+                num = self.get_edge_index(u, v)
+                r = self.get_resistance()[num]
+                A[-1][num] = r
+            B[-1] += self.emf[2]
+        return A, B
 
-        j = 0
-        for i in range(0, len(A)):
-            if (np.count_nonzero(A[i-j]) == 0 and A.shape[0] > B.shape[0]):
-                A = np.delete(A, i-j, 0)
-                j += 1
-
+    def solve(self):
+        A, B = self.make_equation()
+        A = np.array(A)
+        B = np.array(B)
+        print(B.shape)
         I = np.linalg.lstsq(A, B)
-        for q in [w for u, v, w in self.G.edges.data('weight')]:
-            q['i'] = abs(I[0][q['num']])
-        return I
+        # I = np.linalg.solve(np.dot(A.transpose(), A), np.dot(A.transpose(), B))
+        result = [abs(i) for i in I[0]]
+        self.add_currents(result)
+        return result
 
-    def plot(self):
-        colors = self.get_current()
-        pos = nx.circular_layout(self.G)
-        nx.draw(self.G.to_undirected(), pos, edge_color=colors, width=4, edge_cmap=plt.cm.jet, with_labels=True)
+    def add_emf_label(self):
+        for u, v, w in self.G.edges.data():
+            if (u == self.emf[0] and v == self.emf[1]) or (v == self.emf[0] and u == self.emf[1]):
+                w['EMF'] = self.emf[2]
+
+    def round_i_label(self):
+        for u, v, w in self.G.edges.data():
+            w['I'] = (math.ceil(w['I'] * 1000) / 1000)
+
+    def plot_graph(self):
+        self.add_emf_label()
+        colors = self.get_currents()
+        self.round_i_label()
+
+        pos = nx.circular_layout(self.G)  # nx.fruchterman_reingold_layout(self.G)
+        plt.figure(figsize=(10, 10))
+        nx.draw(self.G.to_undirected(), pos, width=2, with_labels=True, edge_color=colors, edge_cmap=plt.cm.jet)
         nx.draw_networkx_edge_labels(self.G, pos)
-        plt.plot()
         plt.show()
 
 
-def generateRandomGraph(number_of_nodes, maxDegreeOutFromVertex=2, maxResistance=50):
-    G = {}
-    for u in range(number_of_nodes):
-        for j in range(random.randint(1, maxDegreeOutFromVertex)):
-            v = u
-            while (v == u or (u, v) in G or (v, u) in G):
-                v = random.randint(0, number_of_nodes - 1)
-            G[(u, v)] = random.random() * maxResistance
-    return G
-
-
-def writeToFile(G, filename):
-    a = []
-    for key in G.keys():
-        a.append([*key, G[key]])
-    a.sort()
-
-    with open(filename, 'w') as f:
-        f.write("""
-    """.join(list(map(lambda x: ' '.join(list(map(lambda el: str(el), x))), a))))
-
-
 if __name__ == "__main__":
-    sol = Solver()
-    sol.load()
-    print(sol.solveKirchhoff())
-    sol.plot()
+    gen = circuitgenerator.CircuitGenerator(0, 4, 12, 6, 'connected')
+    gen.generate_emf()
+    gen.generate_circuit()
+
+    sol = CircutSolver()
+    sol.solve()
+    sol.plot_graph()
