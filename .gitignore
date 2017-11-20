@@ -4,3 +4,5 @@ result
 lab1_c
 mownit_singleprec
 __pycache__
+.ipynb_checkpoints
+*.html
