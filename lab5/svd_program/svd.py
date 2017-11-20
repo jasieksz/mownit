@@ -110,7 +110,3 @@ def z5():
     ax.scatter(R2[0], R2[1], R2[2], color='blue')
     ax.scatter(R3[0], R3[1], R3[2], color='red')
     plt.show()
-
-
-if __name__ == "__main__":
-    z2and3()

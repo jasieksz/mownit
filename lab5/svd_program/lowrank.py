@@ -22,9 +22,16 @@ def compress(image, k):
     return result
 
 
-if __name__ == "__main__":
+def z1(i):
     face = scipy.misc.face(gray=True)
     compressed = [compress(face, k) for k in [8, 32, 64, 128, 256, 512]]
     diff = [np.abs(face - compressed[i]) for i in range(len(compressed))]
-    plt.imshow(compressed[1])
+    plt.imshow(compressed[i])
+    plt.show()
+
+def z2(i):
+    face = scipy.misc.face(gray=True)
+    compressed = [compress(face, k) for k in [8, 32, 64, 128, 256, 512]]
+    diff = [np.abs(face - compressed[i]) for i in range(len(compressed))]
+    plt.imshow(diff[i])
     plt.show()
