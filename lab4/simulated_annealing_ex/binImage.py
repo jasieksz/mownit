@@ -7,8 +7,10 @@ def generate_image(n, d):
     return np.array(np.random.binomial(1, d, (n, n)))
 
 
-def plot_image(image):
-    plt.matshow(image)
+def plot_image(image, size):
+    fig = plt.figure(figsize=(size, size))
+    ax = fig.add_subplot(111)
+    ax.matshow(image, aspect="auto")
     plt.show()
 
 
@@ -49,7 +51,7 @@ class BinImage:
             for ngh in self.neighbours:
                 rn = row + ngh[0]
                 cn = col + ngh[1]
-                if possible(rn, cn, len(image)) and image[rn][cn] == 1:
+                if possible(rn, cn, len(image)) and image[rn][cn] == 0:
                     e += 1
         return e
 
@@ -66,6 +68,7 @@ class BinImage:
         p = np.random.randint(0, self.n)
         q = np.random.randint(0, self.n)
         candidate[s][t], candidate[p][q] = candidate[p][q], candidate[s][t]
+        return s, t, p, q
 
     def acc_prob(self, imageE, candidateE, t):
         return math.exp(-abs(candidateE - imageE) / t)
@@ -74,8 +77,10 @@ class BinImage:
         iteration = 0
         while self.t >= self.stop_t and iteration < self.stop_i:
             candidateI = np.copy(self.image)
-            self.swap_one(candidateI)
-            candidateE = self.total_energy(candidateI)
+            s, t, p, q = self.swap_one(candidateI)
+            candidateE = self.energy \
+                         - (self.point_energy(self.image, s, t) + self.point_energy(self.image, p, q)) \
+                         + (self.point_energy(candidateI, s, t) + self.point_energy(candidateI, p, q))
 
             if candidateE < self.energy:
                 if candidateE < self.bestE:
@@ -116,12 +121,18 @@ class BinImage:
         plt.show()
 
 
-# if __name__ == '__main__':
-#     n1 = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-#     dens = 0.3
-#     bim = BinImage(n=10, neighbours=n1)
-#     bim.anneal()
-#     plot_image(bim.initI)
-#     print(bim.initE)
-#     print(bim.bestE)
-#     plot_image(bim.bestI)
+if __name__ == '__main__':
+    n1 = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    n2 = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, -1), (-1, 1)]
+
+    bim = BinImage(n=128, density=0.3, neighbours=n1, t=16, stop_t=0.0000001, stop_i=10000, alpha=0.9995)
+    bim.anneal()
+
+    plot_image(bim.initI, 5)
+    print(bim.initE)
+
+    plot_image(bim.bestI, 5)
+    print(bim.bestE)
+
+    bim.plot_learning()
+    bim.plot_temp()
