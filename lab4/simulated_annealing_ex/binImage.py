@@ -51,7 +51,7 @@ class BinImage:
             for ngh in self.neighbours:
                 rn = row + ngh[0]
                 cn = col + ngh[1]
-                if possible(rn, cn, len(image)) and image[rn][cn] == 0:
+                if possible(rn, cn, len(image)) and image[rn][cn] == 1:
                     e += 1
         return e
 
@@ -70,6 +70,7 @@ class BinImage:
         candidate[s][t], candidate[p][q] = candidate[p][q], candidate[s][t]
         return s, t, p, q
 
+
     def acc_prob(self, imageE, candidateE, t):
         return math.exp(-abs(candidateE - imageE) / t)
 
@@ -81,6 +82,7 @@ class BinImage:
             candidateE = self.energy \
                          - (self.point_energy(self.image, s, t) + self.point_energy(self.image, p, q)) \
                          + (self.point_energy(candidateI, s, t) + self.point_energy(candidateI, p, q))
+
 
             if candidateE < self.energy:
                 if candidateE < self.bestE:
@@ -125,7 +127,7 @@ if __name__ == '__main__':
     n1 = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     n2 = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, -1), (-1, 1)]
 
-    bim = BinImage(n=128, density=0.3, neighbours=n1, t=16, stop_t=0.0000001, stop_i=10000, alpha=0.9995)
+    bim = BinImage(n=64, density=0.3, neighbours=n1, t=128, stop_t=0.0000001, stop_i=100000, alpha=0.9995)
     bim.anneal()
 
     plot_image(bim.initI, 5)
