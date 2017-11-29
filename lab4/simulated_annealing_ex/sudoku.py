@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import random
 
 
 class Sudoku:
@@ -22,6 +23,7 @@ class Sudoku:
         self.fitness_list = [self.initE]
         self.temp_list = [self.t]
         self.best_list = [self.bestE]
+        self.iter_when_solution = 0
 
     def box_energy(self, sudoku, row, col):
         possible = [(0, 0), (0, 3), (0, 6), (3, 0), (3, 3), (3, 6), (6, 0), (6, 3), (6, 6)]
@@ -30,7 +32,7 @@ class Sudoku:
         fq = np.zeros(9)
         for r in range(row, row + 3):
             for c in range(col, col + 3):
-                fq[sudoku[r][c] - 1] += 1
+                fq[int(sudoku[r][c]) - 1] += 1
         be = 0
         for e in fq:
             if e > 1:
@@ -40,7 +42,7 @@ class Sudoku:
     def row_energy(self, sudoku, row):
         fq = np.zeros(9)
         for col in range(9):
-            fq[sudoku[row][col] - 1] += 1
+            fq[int(sudoku[row][col]) - 1] += 1
         re = 0
         for e in fq:
             if e > 1:
@@ -50,7 +52,7 @@ class Sudoku:
     def col_energy(self, sudoku, col):
         fq = np.zeros(9)
         for row in range(9):
-            fq[sudoku[row][col] - 1] += 1
+            fq[int(sudoku[row][col]) - 1] += 1
         ce = 0
         for e in fq:
             if e > 1:
@@ -89,6 +91,7 @@ class Sudoku:
     def anneal(self):
         iteration = 0
         while self.t >= self.stop_t and iteration < self.stop_i:
+
             candidateS = np.copy(self.sud)
             r, p, q = self.swap_one(candidateS)
             candidateE = self.energy \
@@ -109,6 +112,9 @@ class Sudoku:
 
             self.t *= self.alpha
             iteration += 1
+
+            if self.energy <= 6 and self.iter_when_solution == 0:
+                self.iter_when_solution = iteration
 
             self.fitness_list.append(self.energy)
             self.best_list.append(self.bestE)
@@ -142,13 +148,37 @@ def read_sudoku(path):
     for r in range(n):
         for c in range(n):
             if data[r][c] == 'x':
-                data[r][c] = str(np.random.randint(1, 9))
+                data[r][c] = random.choice("123456789")  # get_not_in_row(data[r])
             data[r][c] = int(data[r][c])
     return np.array(data)
 
 
+def get_not_in_row(row):
+    a = [i for i in range(1, 10)]
+    for e in row:
+        if e != 'x':
+            a.remove(int(e))
+    return a[0]
+
+
 def generate_sudoku():
-    return np.random.random_integers(1, 9, (9, 9))
+    s = np.zeros((9, 9))
+    for row in range(9):
+        a = [i for i in range(1, 10)]
+        for col in range(9):
+            s[row][col] = np.random.choice(a)
+            a.remove(s[row][col])
+    return s
+
+
+def generate_string_sudoku():
+    s = generate_sudoku()
+    r = ""
+    for row in range(9):
+        for col in range(9):
+            r += str(int(s[row][col]))
+        r += '\n'
+    return r
 
 
 def get_box(row, col):
@@ -171,12 +201,5 @@ def get_box(row, col):
 
 
 if __name__ == '__main__':
-    su = Sudoku(t=10, stop_t=0.000001, stop_i=100, alpha=0.995)
-    print(su.initS)
-    print(su.initE)
-
-    print(su.bestS)
-    print(su.bestE)
-
-    su.anneal()
-    su.plot_learning()
+    a = random.choice("123456789")
+    print(a)
