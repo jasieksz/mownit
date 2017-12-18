@@ -6,3 +6,6 @@ mownit_singleprec
 __pycache__
 .ipynb_checkpoints
 *.html
+*.txt
+*.db
+*.csv
