@@ -18,3 +18,12 @@ class dbConnector():
         result = self.cursor.fetchmany(records)
         self.connection.close()
         return result
+
+
+if __name__ == '__main__':
+    db = dbConnector('d:/db/articles.db')
+    tid = 20050
+    data = db.get_articles("SELECT id, title, content FROM articles WHERE id = '%s'" % str(tid), 1)
+    data = data[0]
+    print(data[0], data[1], '\n')
+    print(data[2])
