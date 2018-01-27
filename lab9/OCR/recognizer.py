@@ -90,7 +90,7 @@ class Recognizer():
                 tmpi, tmpj = i, j
         return positions
 
-    def removeLetter(self,letter, positions):
+    def removeLetter(self, letter, positions):
         for x, y in positions:
             lw, lh = self.fontImages[letter].shape
             lh += 5
