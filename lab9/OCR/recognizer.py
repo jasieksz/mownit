@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from scipy import misc, ndimage
 import numpy as np
 from PIL import Image
@@ -10,33 +12,33 @@ class Recognizer():
         self.image = self.readImage(imagePath)
         self.fontImages = self.getLettersImages(sans)
         self.lettersPositions = {}
-        self.maxf = 63
-        self.orderAndFreq = [('x', 1),
-                     ('z', 1),
-                     ('w', 4),
-                     ('y', 4),
-                     ('j', 7),
-                     ('f', 8),
-                     ('v', 8),
-                     ('k', 9),
-                     ('g', 10),
-                     ('p', 11),
-                     ('d', 12),
-                     ('m', 13),
-                     ('b', 14),
-                     ('n', 21),
-                     ('u', 21),
-                     ('h', 26),
-                     ('a', 27),
-                     ('t', 28),
-                     ('i', 30),
-                     ('q', 32),
-                     ('r', 34),
-                     ('l', 39),
-                     ('o', 41),
-                     ('s', 45),
-                     ('e', 51),
-                     ('c', 63)]
+        self.maxf = 7
+        self.orderAndFreq = [('a', 1),
+                             ('f', 1),
+                             ('g', 1),
+                             ('k', 1),
+                             ('m', 1),
+                             ('p', 1),
+                             ('q', 1),
+                             ('s', 1),
+                             ('t', 1),
+                             ('u', 1),
+                             ('w', 1),
+                             ('x', 1),
+                             ('y', 1),
+                             ('z', 1),
+                             ('b', 2),
+                             ('h', 2),
+                             ('j', 2),
+                             ('v', 2),
+                             ('d', 3),
+                             ('e', 3),
+                             ('n', 3),
+                             ('r', 3),
+                             ('i', 4),
+                             ('o', 4),
+                             ('l', 5),
+                             ('c', 7)]
 
     def readImage(self, path):
         result = ndimage.imread(path, mode='I')
@@ -103,28 +105,46 @@ class Recognizer():
             start = time.clock()
             letter = element[0]
             letterImage = self.fontImages[letter]
-            corrCoefficient = 5 * element[1] / self.maxf / 100
-            correlation = self.correlateLetter(self.image, letterImage, 254, threshold=0.8 + corrCoefficient)
+            corrCoefficient = 10 * element[1] / self.maxf / 100
+            correlation = self.correlateLetter(self.image, letterImage, 254, threshold=0.85 + corrCoefficient)
             self.lettersPositions[letter] = self.getLetterPositions(correlation, letterImage)
             self.removeLetter(letter, self.lettersPositions[letter])
-            misc.imsave('data/results/' + letter + '.png', self.image)
             print(letter, " TIME : ", time.clock() - start)
+
+    def positionsToText(self):
+        positions = []
+        for k, v in self.lettersPositions.items():
+            for e in v:
+                positions.append((k, e[0] - e[0]%100, e[1]))
+        positions = sorted(positions, key=lambda e: (e[1], e[2]))
+        print(positions)
+        text = ""
+        space = 70
+        line = 99
+        for i in range(len(positions)-1):
+            text += positions[i][0]
+            if abs(positions[i][2] - positions[i+1][2]) > space:
+                text += chr(32)
+            if abs(positions[i][1] - positions[i+1][1]) >= line:
+                text += '\n'
+        print(text)
+
 
 
 if __name__ == '__main__':
     start = time.clock()
     oceery = Recognizer()
     oceery.matchAllLetters()
-    print("TIME AFTER MATCH : ", time.clock() - start)
-    np.save('data/result_norm.npy', oceery.lettersPositions)
+    oceery.positionsToText()
+    print("TIME AFTER MATCH  nbh: ", time.clock() - start)
 
-    # dic = np.load('data/result.npy')
-    # frq = [(chr(i), dic.item()[chr(i)]) for i in range(97, 123)]
-    # print(len(dic.item()['a']))
-    # print(sorted([(e[0], len(e[1])) for e in frq], key=lambda e: e[1]))
+    # frq = [(k, len(v)) for k, v in oceery.lettersPositions.items()]
+    # print(frq)
+    # dic = np.load('data/alphabetMatch.npy')
+    # dic = sorted(dic, key=lambda e: e[1])
+    # res = []
+    # for i in range(len(dic)):
+    #     res.append((dic[i][0], int(dic[i][1])))
+    # print(res)
 
-    # dic2 = np.load('data/result_norm.npy')
-    # dic2 = dic2.item()
-    # dic2 = [(k, len(v)) for k,v in dic2.items()]
-    # print(dic2)
     print(time.clock() - start)
